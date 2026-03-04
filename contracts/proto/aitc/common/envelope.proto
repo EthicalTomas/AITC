@@ -1,9 +1,43 @@
 syntax = "proto3";
 package aitc.common;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/common";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/common";
 
-message Envelope {
-  string id = 1;
-  string tenant_id = 2;
-  bytes payload = 3;
+import "google/protobuf/timestamp.proto";
+
+// Source identifies where the event originated.
+enum Source {
+  SOURCE_UNSPECIFIED = 0;
+  OKTA_SYSTEM_LOG = 1;
+  M365_UAL = 2;
+  INTERNAL = 3;
+}
+
+// EnvelopeV1 is the top-level Kafka message wrapper.
+// SECURITY: payload bytes must never contain raw OAuth tokens, session tokens, or auth headers.
+// PII: sensitive fields (email, IP) must be redacted before storing normalized attributes.
+message EnvelopeV1 {
+  // tenant_id scopes this message to a specific customer. Required.
+  string tenant_id = 1;
+  // message_id is a globally unique ID for this envelope (UUID v4).
+  string message_id = 2;
+  // schema_version identifies the envelope schema (e.g., "v1").
+  string schema_version = 3;
+  // source identifies the originating system.
+  Source source = 4;
+  // occurred_at is the event timestamp from the source system.
+  google.protobuf.Timestamp occurred_at = 5;
+  // ingested_at is when this envelope was created by the ingestion service.
+  google.protobuf.Timestamp ingested_at = 6;
+  // payload_type is the fully-qualified protobuf message type of payload.
+  string payload_type = 7;
+  // payload is the serialized protobuf message (type specified by payload_type).
+  bytes payload = 8;
+  // trace_id for distributed tracing (W3C traceparent compatible).
+  string trace_id = 9;
+  // span_id for distributed tracing.
+  string span_id = 10;
+  // request_id for correlation across service boundaries.
+  string request_id = 11;
+  // hash_sha256 is an optional SHA-256 hash of payload bytes for integrity.
+  string hash_sha256 = 12;
 }

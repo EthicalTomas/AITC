@@ -1,10 +1,36 @@
 syntax = "proto3";
 package aitc.risk;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/risk";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/risk";
 
-message RiskSignal {
-  string signal_id = 1;
+import "google/protobuf/timestamp.proto";
+
+// Severity of a risk signal.
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  LOW = 1;
+  MEDIUM = 2;
+  HIGH = 3;
+  CRITICAL = 4;
+}
+
+// RiskSignalV1 represents a detected threat indicator for an identity.
+message RiskSignalV1 {
+  string signal_id = 1; // UUID
   string tenant_id = 2;
-  string rule_id = 3;
-  double score = 4;
+  string identity_id = 3;
+  string rule_id = 4; // e.g., "impossible_travel", "mfa_fatigue"
+  string rule_name = 5;
+  Severity severity = 6;
+  // cas_score is the Composite Anomaly Score (0.0-1.0).
+  double cas_score = 7;
+  double confidence = 8; // 0.0-1.0
+  string description = 9;
+  // evidence_event_ids contains normalized event IDs that triggered this signal.
+  repeated string evidence_event_ids = 10;
+  google.protobuf.Timestamp detected_at = 11;
+  // case_id if already correlated to a case.
+  string case_id = 12;
+  // trace propagation
+  string trace_id = 13;
+  string request_id = 14;
 }

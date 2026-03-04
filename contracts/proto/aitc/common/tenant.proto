@@ -1,8 +1,17 @@
 syntax = "proto3";
 package aitc.common;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/common";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/common";
 
-message Tenant {
+import "google/protobuf/timestamp.proto";
+
+// TenantV1 represents an AITC tenant (customer organization).
+message TenantV1 {
   string tenant_id = 1;
   string name = 2;
+  string region = 3; // us-east-1, etc. (US-only v1)
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp onboarding_started_at = 5;
+  // autopilot_enabled is false until admin explicitly enables it after 7-day learning period.
+  bool autopilot_enabled = 6;
+  google.protobuf.Timestamp autopilot_enabled_at = 7;
 }

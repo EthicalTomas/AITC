@@ -1,9 +1,10 @@
 syntax = "proto3";
 package aitc.common;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/common";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/common";
 
 import "google/protobuf/timestamp.proto";
 
+// TimeRange represents a closed time interval.
 message TimeRange {
   google.protobuf.Timestamp start = 1;
   google.protobuf.Timestamp end = 2;

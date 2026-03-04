@@ -1,10 +1,23 @@
 syntax = "proto3";
 package aitc.policy;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/policy";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/policy";
 
-message PolicyDecision {
+import "google/protobuf/timestamp.proto";
+
+// PolicyDecisionV1 records the outcome of a policy validation check.
+// Every proposed action must have a corresponding PolicyDecisionV1 in the audit log.
+message PolicyDecisionV1 {
   string decision_id = 1;
   string tenant_id = 2;
-  string action = 3;
-  bool allowed = 4;
+  string action_id = 3;
+  string action_type = 4;
+  // allowed is true if the action passed all policy checks.
+  bool allowed = 5;
+  // rejection_reasons lists all rules that blocked the action.
+  repeated string rejection_reasons = 6;
+  // blast_radius_score is a 0-100 estimate of impact scope.
+  int32 blast_radius_score = 7;
+  bool in_learning_mode = 8;
+  google.protobuf.Timestamp decided_at = 9;
+  string trace_id = 10;
 }
