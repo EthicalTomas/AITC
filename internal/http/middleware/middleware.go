@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -44,11 +45,19 @@ func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			reqID := RequestIDFromContext(r.Context())
 
-			// Sanitize user-controlled values before logging to prevent log injection (CWE-117).
+			// Use the chi route pattern (e.g. "/api/v1/users/{id}") rather than
+			// r.URL.Path to avoid logging a user-controlled value (CWE-117).
+			// The route pattern is defined by application code, not the caller.
+			path := "/"
+			if rctx := chi.RouteContext(r.Context()); rctx != nil && rctx.RoutePattern() != "" {
+				path = rctx.RoutePattern()
+			}
+
+			// Sanitize the remaining user-controlled fields before logging (CWE-117).
 			reqLogger := logger.With(
 				zap.String("request_id", logging.Sanitize(reqID)),
 				zap.String("method", logging.Sanitize(r.Method)),
-				zap.String("path", logging.Sanitize(r.URL.Path)),
+				zap.String("path", path),
 				zap.String("remote_addr", logging.Sanitize(r.RemoteAddr)),
 			)
 
