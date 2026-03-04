@@ -1,10 +1,31 @@
 syntax = "proto3";
 package aitc.events;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/events";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/events";
 
-message M365Event {
-  string record_id = 1;
+import "google/protobuf/timestamp.proto";
+
+// M365UALEventV1 represents a minimal normalized Microsoft 365 Unified Audit Log event.
+// SECURITY: UserId and ClientIP are PII - redact before logging.
+message M365UALEventV1 {
+  string record_id = 1; // M365 unique ID - used for deduplication
   string tenant_id = 2;
-  string operation = 3;
-  string user_id = 4;
+  string record_type_code = 3; // numeric record type as string
+  string operation = 4; // e.g., "MailboxLogin", "FileDownloaded", "New-InboxRule"
+  google.protobuf.Timestamp creation_time = 5;
+  // user fields - PII
+  string user_id = 6; // UPN - PII
+  string user_type_code = 7; // 0=Regular, 2=Admin, etc.
+  string object_id = 8; // Resource acted upon
+  string workload = 9; // "Exchange", "SharePoint", "AzureAD", etc.
+  // client info
+  string client_ip = 10; // PII
+  string client_info_string = 11;
+  // result
+  string result_status = 12; // "Succeeded", "Failed", etc.
+  // extended properties (serialized JSON subset)
+  string extended_properties_json = 13;
+  // parameters (serialized JSON subset)
+  string parameters_json = 14;
+  // audit data
+  string organization_id = 15; // M365 tenant org ID
 }

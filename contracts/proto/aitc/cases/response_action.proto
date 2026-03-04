@@ -1,9 +1,55 @@
 syntax = "proto3";
 package aitc.cases;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/cases";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/cases";
 
-message ResponseAction {
+import "google/protobuf/timestamp.proto";
+
+// ActionMode describes how this action was created.
+enum ActionMode {
+  ACTION_MODE_UNSPECIFIED = 0;
+  RECOMMENDED = 1;        // learning mode or pending analyst review
+  MANUAL_EXECUTED = 2;   // analyst manually approved and executed
+  AUTOPILOT_EXECUTED = 3; // autopilot executed (post 7-day period)
+}
+
+// ActionStatus lifecycle.
+enum ActionStatus {
+  ACTION_STATUS_UNSPECIFIED = 0;
+  PROPOSED = 1;
+  VALIDATED = 2;
+  REJECTED = 3;
+  EXECUTING = 4;
+  EXECUTED = 5;
+  FAILED = 6;
+  ROLLED_BACK = 7;
+}
+
+// ResponseActionV1 represents a proposed or executed containment action.
+// GUARDRAILS: account deletion, device isolation, network/firewall changes,
+// bulk user policy mutation, and production shutdown are NEVER allowed.
+message ResponseActionV1 {
   string action_id = 1;
-  string case_id = 2;
-  string action_type = 3;
+  string tenant_id = 2;
+  string case_id = 3;
+  string identity_id = 4;
+  // action_type must be in the policy allowlist.
+  string action_type = 5; // e.g., "revoke_sessions", "mfa_stepup", "signon_policy_adjust"
+  ActionMode mode = 6;
+  ActionStatus status = 7;
+  // parameters is action-specific JSON payload.
+  string parameters_json = 8;
+  // idempotency_key prevents duplicate execution.
+  string idempotency_key = 9;
+  // validator_decision_id links to PolicyDecisionV1.
+  string validator_decision_id = 10;
+  string rejection_reason = 11;
+  google.protobuf.Timestamp proposed_at = 12;
+  google.protobuf.Timestamp executed_at = 13;
+  string executed_by = 14; // service name or analyst ID
+  // before_state_json captures pre-action state for audit.
+  string before_state_json = 15;
+  // after_state_json captures post-action state for audit.
+  string after_state_json = 16;
+  string trace_id = 17;
+  string request_id = 18;
 }

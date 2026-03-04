@@ -1,10 +1,10 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ActionAllowlist",
-  "type": "object",
-  "properties": {
-    "tenant_id": { "type": "string" },
-    "allowed_actions": { "type": "array", "items": { "type": "string" } }
-  },
-  "required": ["tenant_id", "allowed_actions"]
+  "version": "v1",
+  "description": "Global action allowlist. Only actions in this list may be executed by the enforcement service. Step 0.1 guardrails are enforced by the disallowed_actions list and cannot be overridden here.",
+  "global_allowed": [
+    "revoke_sessions",
+    "mfa_stepup",
+    "signon_policy_adjust"
+  ],
+  "tenant_overrides": {}
 }

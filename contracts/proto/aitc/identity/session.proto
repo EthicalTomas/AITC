@@ -1,12 +1,32 @@
 syntax = "proto3";
 package aitc.identity;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/identity";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/identity";
 
 import "google/protobuf/timestamp.proto";
 
-message Session {
+// AuthContextV1 captures the authentication context for a session.
+message AuthContextV1 {
+  string authn_method = 1; // "password", "mfa_totp", "mfa_push", etc.
+  string amr = 2; // Authentication Methods References (RFC 8176)
+  // ip_address is PII - redact from logs.
+  string ip_address = 3;
+  string user_agent = 4;
+  string country = 5;
+  string city = 6;
+  double latitude = 7;
+  double longitude = 8;
+}
+
+// SessionV1 represents an authenticated user session.
+message SessionV1 {
   string session_id = 1;
   string identity_id = 2;
   string tenant_id = 3;
-  google.protobuf.Timestamp created_at = 4;
+  AuthContextV1 auth_context = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp last_activity_at = 7;
+  bool is_active = 8;
+  string provider = 9; // "okta" | "m365"
+  string provider_session_id = 10;
 }

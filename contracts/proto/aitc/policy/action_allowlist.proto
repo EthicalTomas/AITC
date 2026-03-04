@@ -1,8 +1,13 @@
 syntax = "proto3";
 package aitc.policy;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/policy";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/policy";
 
-message ActionAllowlist {
-  string tenant_id = 1;
-  repeated string allowed_actions = 2;
+// ActionAllowlistV1 defines the set of permitted action types for enforcement.
+// Only actions in this list may be passed to the enforcement service.
+message ActionAllowlistV1 {
+  // global_allowed lists actions permitted for all tenants.
+  repeated string global_allowed = 1;
+  // tenant_id scoped overrides (empty = use global).
+  string tenant_id = 2;
+  repeated string tenant_allowed = 3;
 }

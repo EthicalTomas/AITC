@@ -1,10 +1,35 @@
 syntax = "proto3";
 package aitc.cases;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/cases";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/cases";
 
-message Case {
+import "google/protobuf/timestamp.proto";
+
+// CaseStatus lifecycle.
+enum CaseStatus {
+  CASE_STATUS_UNSPECIFIED = 0;
+  OPEN = 1;
+  IN_PROGRESS = 2;
+  RESOLVED = 3;
+  CLOSED = 4;
+  FALSE_POSITIVE = 5;
+}
+
+// CaseV1 represents an investigation case for a potential identity compromise.
+message CaseV1 {
   string case_id = 1;
   string tenant_id = 2;
-  string title = 3;
-  string status = 4;
+  string identity_id = 3;
+  string title = 4;
+  string description = 5;
+  CaseStatus status = 6;
+  // severity from the highest contributing risk signal.
+  string severity = 7;
+  // signal_ids that opened/contributed to this case.
+  repeated string signal_ids = 8;
+  // assigned_to is the analyst user ID (optional).
+  string assigned_to = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+  google.protobuf.Timestamp closed_at = 12;
+  string trace_id = 13;
 }

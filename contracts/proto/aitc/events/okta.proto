@@ -1,10 +1,43 @@
 syntax = "proto3";
 package aitc.events;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/events";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/events";
 
-message OktaEvent {
-  string event_id = 1;
+import "google/protobuf/timestamp.proto";
+
+// OktaSystemLogEventV1 represents a minimal normalized Okta System Log event.
+// SECURITY: actor.detail and target fields may contain PII - redact before logging.
+message OktaSystemLogEventV1 {
+  string event_id = 1; // Okta UUID - used for deduplication
   string tenant_id = 2;
-  string event_type = 3;
-  string actor_id = 4;
+  string event_type = 3; // e.g., "user.session.start", "user.mfa.okta_verify.deny"
+  string display_message = 4;
+  string severity = 5; // "INFO", "WARN", "ERROR"
+  google.protobuf.Timestamp published = 6;
+  // actor fields - actor.id and actor.login are PII
+  string actor_id = 7;
+  string actor_type = 8; // "User", "SystemPrincipal"
+  string actor_alternate_id = 9; // email/login - PII
+  string actor_display_name = 10;
+  // outcome
+  string outcome_result = 11; // "SUCCESS", "FAILURE", "SKIPPED", "ALLOW", "DENY"
+  string outcome_reason = 12;
+  // client context
+  string client_ip_address = 13; // PII
+  string client_user_agent = 14;
+  string client_zone = 15;
+  // geo
+  string geo_city = 16;
+  string geo_country = 17;
+  double geo_lat = 18;
+  double geo_lon = 19;
+  // auth context
+  string authentication_provider = 20;
+  string credential_type = 21;
+  // target summary (first target if present)
+  string target_id = 22;
+  string target_type = 23;
+  string target_alternate_id = 24; // may be email - PII
+  // raw transaction
+  string transaction_id = 25;
+  string request_uri = 26;
 }

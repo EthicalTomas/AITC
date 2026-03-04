@@ -1,13 +1,56 @@
 syntax = "proto3";
 package aitc.events;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/events";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/events";
 
 import "google/protobuf/timestamp.proto";
 
-message NormalizedEvent {
-  string event_id = 1;
+// EventCategory groups events into security-relevant taxonomy.
+enum EventCategory {
+  EVENT_CATEGORY_UNSPECIFIED = 0;
+  AUTHENTICATION = 1;
+  AUTHORIZATION = 2;
+  MFA = 3;
+  SESSION = 4;
+  ADMIN = 5;
+  EMAIL = 6;
+  FILE = 7;
+  OAUTH = 8;
+  POLICY_CHANGE = 9;
+  OTHER = 10;
+}
+
+// NormalizedEventV1 is the canonical representation of any security event.
+// PII: actor_email and source_ip are PII fields - handle per pii-handling.md.
+message NormalizedEventV1 {
+  string event_id = 1; // UUID - AITC internal ID
   string tenant_id = 2;
-  string actor_id = 3;
-  string action = 4;
-  google.protobuf.Timestamp occurred_at = 5;
+  string source_event_id = 3; // original provider event ID (for dedup)
+  string source = 4; // "okta" | "m365"
+  EventCategory category = 5;
+  string action = 6; // normalized action name e.g. "user.session.start"
+  string outcome = 7; // "success" | "failure" | "unknown"
+  google.protobuf.Timestamp occurred_at = 8;
+  google.protobuf.Timestamp ingested_at = 9;
+  // actor - PII fields below
+  string actor_id = 10; // provider actor ID
+  string actor_email = 11; // PII
+  string actor_display_name = 12;
+  bool actor_is_privileged = 13;
+  // target
+  string target_id = 14;
+  string target_type = 15;
+  // network - PII
+  string source_ip = 16; // PII
+  string user_agent = 17;
+  string geo_country = 18;
+  string geo_city = 19;
+  double geo_lat = 20;
+  double geo_lon = 21;
+  // auth
+  string authn_method = 22;
+  bool mfa_used = 23;
+  // risk hints
+  double risk_score_hint = 24; // optional hint from provider
+  // raw ref
+  string raw_s3_key = 25; // pointer to raw archive in S3/MinIO
 }

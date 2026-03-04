@@ -1,10 +1,23 @@
 syntax = "proto3";
 package aitc.identity;
-option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/identity";
+option go_package = "github.com/ethicaltomas/aitc/internal/gen/aitc/identity";
 
-message Identity {
-  string id = 1;
+import "google/protobuf/timestamp.proto";
+
+// IdentityV1 represents a user identity tracked by AITC.
+// PII: email and display_name are PII - handle per pii-handling.md.
+message IdentityV1 {
+  string identity_id = 1;
   string tenant_id = 2;
-  string email = 3;
-  string display_name = 4;
+  // provider_id is the ID in the source IdP (Okta user ID or M365 UPN).
+  string provider_id = 3;
+  string provider = 4; // "okta" | "m365"
+  // email is PII - redact from logs.
+  string email = 5;
+  string display_name = 6;
+  repeated string roles = 7;
+  bool is_privileged = 8;
+  bool mfa_enrolled = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
 }
