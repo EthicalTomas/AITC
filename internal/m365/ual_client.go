@@ -143,6 +143,12 @@ func (c *Client) ListContentBlobs(ctx context.Context, contentType string, start
 
 // FetchContent downloads records from a content blob URI.
 func (c *Client) FetchContent(ctx context.Context, contentURI string) ([]UALRecord, error) {
+	// SECURITY: Validate contentURI host is the expected M365 host to prevent SSRF.
+	// contentURI comes from external API responses and must not be trusted blindly.
+	parsed, parseErr := url.Parse(contentURI)
+	if parseErr != nil || parsed.Scheme != "https" || parsed.Host != "manage.office.com" {
+		return nil, fmt.Errorf("m365 client: contentURI must be https://manage.office.com/...")
+	}
 	if err := c.ensureToken(ctx); err != nil {
 		return nil, err
 	}

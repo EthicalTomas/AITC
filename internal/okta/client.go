@@ -119,7 +119,14 @@ func (c *Client) PollSystemLog(ctx context.Context, since time.Time, limit int) 
 }
 
 // FetchPage fetches a specific page by URL (for pagination via Link header).
+// SECURITY: pageURL is derived from the Link response header; validate its scheme
+// and host match the configured Okta base URL to prevent SSRF.
 func (c *Client) FetchPage(ctx context.Context, pageURL string) ([]SystemLogEvent, string, error) {
+	baseURLParsed, _ := url.Parse(c.baseURL)
+	pageParsed, err := url.Parse(pageURL)
+	if err != nil || pageParsed.Scheme != baseURLParsed.Scheme || pageParsed.Host != baseURLParsed.Host {
+		return nil, "", fmt.Errorf("okta client: pageURL host does not match configured base URL")
+	}
 	return c.fetchPage(ctx, pageURL)
 }
 
