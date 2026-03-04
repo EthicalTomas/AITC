@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "Id": "00000000-0000-0000-0000-000000000101",
+    "CreationTime": "2026-03-04T10:00:00Z",
+    "Operation": "UserLoggedIn",
+    "OrganizationId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "RecordType": 15,
+    "ResultStatus": "Success",
+    "UserId": "bob@example.com",
+    "UserType": 0,
+    "Workload": "AzureActiveDirectory",
+    "ObjectId": "bob@example.com",
+    "ClientIP": "198.51.100.10"
+  },
+  {
+    "Id": "00000000-0000-0000-0000-000000000102",
+    "CreationTime": "2026-03-04T10:10:00Z",
+    "Operation": "Set-Mailbox",
+    "OrganizationId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "RecordType": 1,
+    "ResultStatus": "Success",
+    "UserId": "bob@example.com",
+    "UserType": 0,
+    "Workload": "Exchange",
+    "ObjectId": "bob@example.com",
+    "ClientIP": "198.51.100.10"
+  }
+]
+
