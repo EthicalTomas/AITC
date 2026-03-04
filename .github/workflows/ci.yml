@@ -81,23 +81,33 @@ jobs:
 
   # ── Step 2.7: Proto generation check ────────────────────────────────────
   proto-check:
-    name: Proto — verify files are well-formed
+    name: Proto — generate and verify up-to-date
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
 
       - name: Install protoc
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y protobuf-compiler
 
-      - name: Lint proto files
+      - name: Install protoc-gen-go
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+
+      - name: make proto
+        run: make proto
+
+      - name: make proto-export
+        run: make proto-export
+
+      - name: Verify generated code is up-to-date
         run: |
-          find contracts/proto -name "*.proto" | while read f; do
-            protoc --proto_path=contracts/proto "$f" --descriptor_set_out=/dev/null \
-              || (echo "FAILED: $f" && exit 1)
-          done
-          echo "All proto files validated."
+          git diff --exit-code || (echo "ERROR: Generated proto code is out of date. Run 'make proto && make proto-export' and commit the results." && exit 1)
 
   # ── Step 2.7: Python checks (LLM reasoner) ──────────────────────────────
   python:
