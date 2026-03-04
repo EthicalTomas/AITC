@@ -73,4 +73,5 @@ DROP POLICY IF EXISTS response_actions_tenant_isolation ON response_actions;
 DROP TABLE IF EXISTS response_actions;
 DROP TRIGGER IF EXISTS cases_updated_at ON cases;
 DROP POLICY IF EXISTS cases_tenant_isolation ON cases;
+ALTER TABLE risk_signals DROP CONSTRAINT IF EXISTS risk_signals_case_fk;
 DROP TABLE IF EXISTS cases;
