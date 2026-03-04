@@ -1,0 +1,38 @@
+service_name: ingestion
+http:
+  listen_addr: ":8080"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+postgres:
+  dsn: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+redis:
+  addr: "localhost:6379"
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_raw_events: "raw-events"
+  consumer_group_id: "ingestion"
+s3:
+  raw_bucket: "aitc-raw-events"
+  endpoint: "http://localhost:9000"  # MinIO dev; leave empty for AWS S3
+  region: "us-east-1"
+  force_path_style: true
+okta:
+  base_url: "https://your-org.okta.com"
+  token: ""  # override with OKTA_TOKEN env var; load from Secrets Manager in prod
+m365:
+  tenant_id: ""   # Microsoft directory (tenant) ID
+  client_id: ""   # Azure AD app registration client ID
+  client_secret: ""  # override with M365_CLIENT_SECRET env var; load from Secrets Manager in prod
+ingestion:
+  mock: true          # set false in production; reads sample files when true
+  backfill_hours: 24  # how far back to look when no checkpoint exists
+  poll_interval_seconds: 60
+  tenant_ids:
+    - "dev-tenant-001"
+policy:
+  allowlist_path: "contracts/json/policy/action_allowlist.v1.json"
+  disallowed_path: "contracts/json/policy/disallowed_actions.v1.json"

@@ -20,6 +20,22 @@ type Config struct {
 	Okta        OktaConfig     `yaml:"okta"`
 	M365        M365Config     `yaml:"m365"`
 	Policy      PolicyConfig   `yaml:"policy"`
+	Ingestion   IngestionConfig `yaml:"ingestion"`
+}
+
+// IngestionConfig configures the ingestion service pollers.
+type IngestionConfig struct {
+	// Mock skips real API calls and reads from tools/data sample files instead.
+	// Archive and DB writes still occur. Never set true in production.
+	Mock bool `yaml:"mock"`
+	// BackfillHours is how far back (in hours) to backfill when no checkpoint exists.
+	// Defaults to 24.
+	BackfillHours int `yaml:"backfill_hours"`
+	// PollIntervalSeconds is how frequently to poll the source APIs. Defaults to 60.
+	PollIntervalSeconds int `yaml:"poll_interval_seconds"`
+	// TenantIDs lists the tenants this ingestion instance polls for.
+	// In a multi-tenant deployment this would be sourced from the tenants table.
+	TenantIDs []string `yaml:"tenant_ids"`
 }
 
 type HTTPConfig struct {
@@ -157,6 +173,12 @@ func (c *Config) validate() error {
 	}
 	if len(c.Kafka.Brokers) == 0 {
 		c.Kafka.Brokers = []string{"localhost:9092"}
+	}
+	if c.Ingestion.BackfillHours == 0 {
+		c.Ingestion.BackfillHours = 24
+	}
+	if c.Ingestion.PollIntervalSeconds == 0 {
+		c.Ingestion.PollIntervalSeconds = 60
 	}
 	if len(errs) > 0 {
 		return fmt.Errorf("%s", strings.Join(errs, "; "))

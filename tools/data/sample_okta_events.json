@@ -1,1 +1,85 @@
-[]
+[
+  {
+    "uuid": "00000000-0000-0000-0000-000000000001",
+    "published": "2026-03-04T10:00:00.000Z",
+    "eventType": "user.session.start",
+    "displayMessage": "User login to Okta",
+    "severity": "INFO",
+    "actor": {
+      "id": "00u1a2b3c4d5e6f7g8h9",
+      "type": "User",
+      "alternateId": "alice@example.com",
+      "displayName": "Alice Smith"
+    },
+    "outcome": {
+      "result": "SUCCESS",
+      "reason": ""
+    },
+    "client": {
+      "ipAddress": "203.0.113.42",
+      "userAgent": {
+        "rawUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+      },
+      "zone": "DefaultZone",
+      "geographicalContext": {
+        "city": "San Francisco",
+        "country": "US",
+        "lat": 37.7749,
+        "lon": -122.4194
+      }
+    },
+    "authenticationContext": {
+      "authenticationProvider": "OKTA",
+      "credentialType": "PASSWORD"
+    },
+    "target": [],
+    "transaction": {
+      "id": "txn-00000000-0001"
+    },
+    "request": {
+      "ipChain": [{"ip": "203.0.113.42"}]
+    }
+  },
+  {
+    "uuid": "00000000-0000-0000-0000-000000000002",
+    "published": "2026-03-04T10:05:00.000Z",
+    "eventType": "user.mfa.factor.activate",
+    "displayMessage": "User activated MFA factor",
+    "severity": "INFO",
+    "actor": {
+      "id": "00u1a2b3c4d5e6f7g8h9",
+      "type": "User",
+      "alternateId": "alice@example.com",
+      "displayName": "Alice Smith"
+    },
+    "outcome": {
+      "result": "SUCCESS",
+      "reason": ""
+    },
+    "client": {
+      "ipAddress": "203.0.113.42",
+      "userAgent": {
+        "rawUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+      },
+      "zone": "DefaultZone",
+      "geographicalContext": {
+        "city": "San Francisco",
+        "country": "US",
+        "lat": 37.7749,
+        "lon": -122.4194
+      }
+    },
+    "authenticationContext": {
+      "authenticationProvider": "OKTA",
+      "credentialType": "PASSWORD"
+    },
+    "target": [],
+    "transaction": {
+      "id": "txn-00000000-0002"
+    },
+    "request": {
+      "ipChain": [{"ip": "203.0.113.42"}]
+    }
+  }
+]
+
