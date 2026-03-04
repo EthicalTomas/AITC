@@ -1,0 +1,9 @@
+syntax = "proto3";
+package aitc.common;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/common";
+
+message Envelope {
+  string id = 1;
+  string tenant_id = 2;
+  bytes payload = 3;
+}

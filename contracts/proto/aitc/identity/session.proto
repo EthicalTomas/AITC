@@ -1,0 +1,12 @@
+syntax = "proto3";
+package aitc.identity;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/identity";
+
+import "google/protobuf/timestamp.proto";
+
+message Session {
+  string session_id = 1;
+  string identity_id = 2;
+  string tenant_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+}

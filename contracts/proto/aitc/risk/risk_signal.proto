@@ -1,0 +1,10 @@
+syntax = "proto3";
+package aitc.risk;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/risk";
+
+message RiskSignal {
+  string signal_id = 1;
+  string tenant_id = 2;
+  string rule_id = 3;
+  double score = 4;
+}

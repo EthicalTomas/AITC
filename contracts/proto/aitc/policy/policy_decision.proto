@@ -1,0 +1,10 @@
+syntax = "proto3";
+package aitc.policy;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/policy";
+
+message PolicyDecision {
+  string decision_id = 1;
+  string tenant_id = 2;
+  string action = 3;
+  bool allowed = 4;
+}
