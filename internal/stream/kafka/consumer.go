@@ -6,25 +6,17 @@ import (
 	"time"
 
 	segkafka "github.com/segmentio/kafka-go"
+	"google.golang.org/protobuf/proto"
+
+	commonpb "github.com/ethicaltomas/aitc/contracts/gen/go/aitc/common"
 )
 
 // DLQSuffix is the dead-letter queue topic suffix.
 const DLQSuffix = ".dlq"
 
-// Message is the deserialized Kafka message with envelope metadata.
-type Message struct {
-	TenantID    string
-	MessageID   string
-	PayloadType string
-	TraceID     string
-	RequestID   string
-	Payload     []byte
-	RawMsg      segkafka.Message
-}
-
-// Handler processes a Kafka message. Return error to trigger DLQ routing.
-// Handlers MUST be idempotent.
-type Handler func(ctx context.Context, msg Message) error
+// Handler processes a decoded EnvelopeV1 Kafka message. Return error to trigger DLQ routing.
+// Handlers MUST be idempotent (messages may be delivered more than once).
+type Handler func(ctx context.Context, env *commonpb.EnvelopeV1) error
 
 // Consumer wraps kafka-go reader with retry and DLQ support.
 type Consumer struct {
@@ -33,7 +25,8 @@ type Consumer struct {
 	topic     string
 }
 
-// NewConsumer creates a new Kafka consumer with DLQ support.
+// NewConsumer creates a new Kafka consumer group runner with DLQ support.
+// The DLQ topic is derived as: {topic}.dlq.
 func NewConsumer(brokers []string, topic, groupID string) *Consumer {
 	reader := segkafka.NewReader(segkafka.ReaderConfig{
 		Brokers:        brokers,
@@ -60,8 +53,9 @@ func NewConsumer(brokers []string, topic, groupID string) *Consumer {
 	}
 }
 
-// Consume reads messages and calls handler. Sends to DLQ on handler error.
-// Handlers must be idempotent (message may be delivered more than once).
+// Consume reads messages, decodes them as EnvelopeV1 protobuf, and calls handler.
+// On handler error the raw message is forwarded to the DLQ topic ({topic}.dlq).
+// Returns nil on context cancellation (graceful shutdown).
 func (c *Consumer) Consume(ctx context.Context, handler Handler) error {
 	for {
 		rawMsg, err := c.reader.FetchMessage(ctx)
@@ -72,10 +66,11 @@ func (c *Consumer) Consume(ctx context.Context, handler Handler) error {
 			return fmt.Errorf("kafka consumer fetch: %w", err)
 		}
 
-		msg := parseMessage(rawMsg)
-
-		if err := handler(ctx, msg); err != nil {
-			_ = c.sendToDLQ(ctx, rawMsg, err.Error())
+		env, decodeErr := decodeEnvelope(rawMsg.Value)
+		if decodeErr != nil {
+			_ = c.sendToDLQ(ctx, rawMsg, fmt.Sprintf("decode error: %s", decodeErr))
+		} else if handlerErr := handler(ctx, env); handlerErr != nil {
+			_ = c.sendToDLQ(ctx, rawMsg, handlerErr.Error())
 		}
 
 		if err := c.reader.CommitMessages(ctx, rawMsg); err != nil {
@@ -84,24 +79,13 @@ func (c *Consumer) Consume(ctx context.Context, handler Handler) error {
 	}
 }
 
-func parseMessage(raw segkafka.Message) Message {
-	msg := Message{
-		Payload: raw.Value,
-		RawMsg:  raw,
+// decodeEnvelope unmarshals raw bytes into an EnvelopeV1 protobuf message.
+func decodeEnvelope(data []byte) (*commonpb.EnvelopeV1, error) {
+	env := &commonpb.EnvelopeV1{}
+	if err := proto.Unmarshal(data, env); err != nil {
+		return nil, fmt.Errorf("unmarshal EnvelopeV1: %w", err)
 	}
-	for _, h := range raw.Headers {
-		switch h.Key {
-		case "tenant_id":
-			msg.TenantID = string(h.Value)
-		case "payload_type":
-			msg.PayloadType = string(h.Value)
-		case "trace_id":
-			msg.TraceID = string(h.Value)
-		case "request_id":
-			msg.RequestID = string(h.Value)
-		}
-	}
-	return msg
+	return env, nil
 }
 
 func (c *Consumer) sendToDLQ(ctx context.Context, msg segkafka.Message, reason string) error {
