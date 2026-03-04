@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -158,22 +159,31 @@ func (c *Client) fetchPage(ctx context.Context, endpoint string) ([]SystemLogEve
 }
 
 func parseRetryAfter(resp *http.Response) time.Duration {
-	_ = resp.Header.Get("X-Rate-Limit-Reset")
-	return 60 * time.Second
+	v := resp.Header.Get("X-Rate-Limit-Reset")
+	if v == "" {
+		return 60 * time.Second
+	}
+	// X-Rate-Limit-Reset is a Unix timestamp (seconds)
+	resetUnix, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return 60 * time.Second
+	}
+	d := time.Until(time.Unix(resetUnix, 0))
+	if d <= 0 {
+		return time.Second
+	}
+	return d
 }
 
 func extractNextLink(linkHeader string) string {
 	if linkHeader == "" {
 		return ""
 	}
-	for _, part := range splitLink(linkHeader) {
-		if len(part) < 2 {
-			continue
-		}
+	for _, part := range strings.Split(linkHeader, ",") {
 		linkURL := ""
 		isNext := false
-		for _, seg := range splitSemicolon(part) {
-			seg = trimSpace(seg)
+		for _, seg := range strings.Split(part, ";") {
+			seg = strings.TrimSpace(seg)
 			if len(seg) > 2 && seg[0] == '<' && seg[len(seg)-1] == '>' {
 				linkURL = seg[1 : len(seg)-1]
 			}
@@ -186,57 +196,4 @@ func extractNextLink(linkHeader string) string {
 		}
 	}
 	return ""
-}
-
-func splitLink(s string) []string {
-	var parts []string
-	current := ""
-	for _, ch := range s {
-		if ch == ',' {
-			parts = append(parts, current)
-			current = ""
-		} else {
-			current += string(ch)
-		}
-	}
-	if current != "" {
-		parts = append(parts, current)
-	}
-	return parts
-}
-
-func splitSemicolon(s string) []string {
-	var parts []string
-	current := ""
-	for _, ch := range s {
-		if ch == ';' {
-			parts = append(parts, current)
-			current = ""
-		} else {
-			current += string(ch)
-		}
-	}
-	if current != "" {
-		parts = append(parts, current)
-	}
-	return parts
-}
-
-func trimSpace(s string) string {
-	result := ""
-	for i, ch := range s {
-		if ch != ' ' && ch != '\t' {
-			result = s[i:]
-			break
-		}
-	}
-	for len(result) > 0 {
-		last := result[len(result)-1]
-		if last == ' ' || last == '\t' {
-			result = result[:len(result)-1]
-		} else {
-			break
-		}
-	}
-	return result
 }
