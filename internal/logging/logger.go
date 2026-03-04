@@ -3,6 +3,7 @@ package logging
 import (
 	"context"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -56,4 +57,18 @@ func FromContext(ctx context.Context) *zap.Logger {
 // Use for PII and secret fields that must never be logged.
 func RedactedField(key string) zap.Field {
 	return zap.String(key, "[REDACTED]")
+}
+
+// Sanitize strips ASCII and Unicode control characters (including newlines,
+// carriage returns, tabs, Unicode line separator U+2028 and paragraph
+// separator U+2029) from s before it is written to a log entry.
+// This prevents log injection / log forging (CWE-117) when logging values
+// that originate from user-controlled input such as HTTP headers or URL paths.
+func Sanitize(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f || r == 0x2028 || r == 0x2029 {
+			return -1
+		}
+		return r
+	}, s)
 }

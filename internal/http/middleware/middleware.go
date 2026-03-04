@@ -44,11 +44,12 @@ func Logger(logger *zap.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			reqID := RequestIDFromContext(r.Context())
 
+			// Sanitize user-controlled values before logging to prevent log injection (CWE-117).
 			reqLogger := logger.With(
-				zap.String("request_id", reqID),
-				zap.String("method", r.Method),
-				zap.String("path", r.URL.Path),
-				zap.String("remote_addr", r.RemoteAddr),
+				zap.String("request_id", logging.Sanitize(reqID)),
+				zap.String("method", logging.Sanitize(r.Method)),
+				zap.String("path", logging.Sanitize(r.URL.Path)),
+				zap.String("remote_addr", logging.Sanitize(r.RemoteAddr)),
 			)
 
 			ctx := logging.WithLogger(r.Context(), reqLogger)
