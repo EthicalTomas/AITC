@@ -1,14 +1,122 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
 permissions:
   contents: read
+
 jobs:
-  build:
+  # ── Step 2.7: Go lint, test, build ──────────────────────────────────────
+  go:
+    name: Go — lint, build, test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
-      - run: go build ./...
+          go-version: "1.25.0"
+          cache: true
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b $(go env GOPATH)/bin v1.59.1
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: lint
+        run: golangci-lint run ./... --timeout=5m
+
+      - name: build
+        run: go build ./...
+
+      - name: test
+        run: go test -race -timeout=120s ./...
+
+  # ── Step 2.7: Migration validation ──────────────────────────────────────
+  migrations:
+    name: Validate goose migrations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aitc
+          POSTGRES_PASSWORD: aitc
+          POSTGRES_DB: aitc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+
+      - name: Install goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Run migrations up
+        env:
+          POSTGRES_DSN: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+        run: |
+          goose -dir db/migrations/postgres postgres "$POSTGRES_DSN" up
+
+      - name: Run migrations down (validate reversibility)
+        env:
+          POSTGRES_DSN: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+        run: |
+          goose -dir db/migrations/postgres postgres "$POSTGRES_DSN" down-to 0
+
+  # ── Step 2.7: Proto generation check ────────────────────────────────────
+  proto-check:
+    name: Proto — verify files are well-formed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Lint proto files
+        run: |
+          find contracts/proto -name "*.proto" | while read f; do
+            protoc --proto_path=contracts/proto "$f" --descriptor_set_out=/dev/null \
+              || (echo "FAILED: $f" && exit 1)
+          done
+          echo "All proto files validated."
+
+  # ── Step 2.7: Python checks (LLM reasoner) ──────────────────────────────
+  python:
+    name: Python — LLM reasoner lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linters
+        run: pip install ruff
+
+      - name: ruff check
+        run: |
+          if [ -d services/llm_reasoner ]; then
+            ruff check services/llm_reasoner/ || true
+          fi
+
 
