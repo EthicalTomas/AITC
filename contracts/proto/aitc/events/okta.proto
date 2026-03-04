@@ -1,0 +1,10 @@
+syntax = "proto3";
+package aitc.events;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/events";
+
+message OktaEvent {
+  string event_id = 1;
+  string tenant_id = 2;
+  string event_type = 3;
+  string actor_id = 4;
+}

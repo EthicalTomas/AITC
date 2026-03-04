@@ -1,0 +1,10 @@
+syntax = "proto3";
+package aitc.common;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/common";
+
+import "google/protobuf/timestamp.proto";
+
+message TimeRange {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+}

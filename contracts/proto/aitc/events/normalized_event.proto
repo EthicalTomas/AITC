@@ -1,0 +1,13 @@
+syntax = "proto3";
+package aitc.events;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/events";
+
+import "google/protobuf/timestamp.proto";
+
+message NormalizedEvent {
+  string event_id = 1;
+  string tenant_id = 2;
+  string actor_id = 3;
+  string action = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}

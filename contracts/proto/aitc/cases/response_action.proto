@@ -1,0 +1,9 @@
+syntax = "proto3";
+package aitc.cases;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/cases";
+
+message ResponseAction {
+  string action_id = 1;
+  string case_id = 2;
+  string action_type = 3;
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Policy",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "rules": { "type": "array" }
+  },
+  "required": ["id", "tenant_id"]
+}

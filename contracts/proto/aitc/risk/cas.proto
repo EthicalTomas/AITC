@@ -1,0 +1,9 @@
+syntax = "proto3";
+package aitc.risk;
+option go_package = "github.com/ethicaltomas/aitc/contracts/proto/aitc/risk";
+
+message CasResult {
+  string case_id = 1;
+  string tenant_id = 2;
+  double confidence = 3;
+}
