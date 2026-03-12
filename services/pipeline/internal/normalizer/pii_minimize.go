@@ -6,25 +6,27 @@ import (
 	"net"
 	"strings"
 
+	"google.golang.org/protobuf/proto"
+
 	eventspb "github.com/ethicaltomas/aitc/contracts/gen/go/aitc/events"
 )
 
-// MinimizePII returns a shallow copy of ev with PII fields redacted or
-// minimized according to the AITC PII handling policy:
+// MinimizePII returns a deep copy of ev with PII fields redacted or minimized
+// according to the AITC PII handling policy:
 //   - source_ip: masked to /24 subnet for IPv4 (last octet → 0), or /48 for IPv6.
 //   - actor_email: domain preserved, local-part replaced with a prefix + "****".
 //   - user_agent: preserved (not PII per policy; useful for fingerprinting).
 //
-// The original event is not modified.
+// The original event is not modified. proto.Clone is used to safely deep-copy
+// the protobuf message, avoiding unsafe copies of internal sync.Mutex fields.
 func MinimizePII(ev *eventspb.NormalizedEventV1) *eventspb.NormalizedEventV1 {
 	if ev == nil {
 		return nil
 	}
-	// Shallow copy
-	out := *ev
+	out := proto.Clone(ev).(*eventspb.NormalizedEventV1)
 	out.SourceIp = maskIP(ev.GetSourceIp())
 	out.ActorEmail = maskEmail(ev.GetActorEmail())
-	return &out
+	return out
 }
 
 // maskIP masks IPv4 addresses to the /24 boundary (last octet = 0) and IPv6
