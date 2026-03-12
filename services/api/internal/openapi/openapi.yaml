@@ -2,5 +2,533 @@ openapi: "3.0.0"
 info:
   title: AITC API
   version: "1.0.0"
-paths: {}
+  description: |
+    Autonomous Identity Threat Containment (AITC) REST API.
+    All endpoints require a valid Bearer token (Okta OIDC).
+    RBAC roles: Admin, Analyst, Auditor, ReadOnly.
+
+servers:
+  - url: http://localhost:8085
+    description: Local development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        status:
+          type: string
+          enum: [open, in_progress, resolved, closed, false_positive]
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        title:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CaseList:
+      allOf:
+        - $ref: '#/components/schemas/Pagination'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Case'
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        case_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+        mode:
+          type: string
+          enum: [recommended, manual_executed, autopilot_executed]
+        status:
+          type: string
+          enum: [proposed, validated, rejected, executing, executed, failed, rolled_back]
+        executed_by:
+          type: string
+          nullable: true
+        proposed_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RecommendationList:
+      allOf:
+        - $ref: '#/components/schemas/Pagination'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Recommendation'
+
+    EnableAutopilotRequest:
+      type: object
+      required: [confirm]
+      properties:
+        confirm:
+          type: boolean
+          description: Must be explicitly true to enable autopilot.
+
+    EnableAutopilotResponse:
+      type: object
+      properties:
+        autopilot_enabled:
+          type: boolean
+        tenant_id:
+          type: string
+
+    CreateReportRequest:
+      type: object
+      required: [report_type, period_start, period_end]
+      properties:
+        report_type:
+          type: string
+          enum: [soc2, iso27001]
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+
+    CreateReportResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [generating]
+        report_type:
+          type: string
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+        report_type:
+          type: string
+        status:
+          type: string
+          enum: [generating, complete, failed]
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        s3_bucket:
+          type: string
+          nullable: true
+        s3_key:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/cases:
+    get:
+      summary: List cases
+      description: |
+        Returns a paginated list of threat cases for the authenticated tenant.
+        **Required role:** ReadOnly or higher (ReadOnly, Analyst, Auditor, Admin).
+      operationId: listCases
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, in_progress, resolved, closed, false_positive]
+          description: Filter by case status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated list of cases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseList'
+        "400":
+          description: Bad request (missing tenant_id)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden (insufficient role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/cases/{id}:
+    get:
+      summary: Get a case by ID
+      description: |
+        Returns a single case by ID.
+        **Required role:** ReadOnly or higher.
+      operationId: getCase
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/recommendations:
+    get:
+      summary: List recommendations
+      description: |
+        Returns a paginated list of recommended response actions.
+        **Required role:** ReadOnly or higher.
+      operationId: listRecommendations
+      parameters:
+        - name: case_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by case ID
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by status (pending, executing, executed, failed)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated list of recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationList'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/recommendations/{id}/execute:
+    post:
+      summary: Execute a recommendation
+      description: |
+        Manually executes a recommended response action.
+        Blocked if the tenant is in learning mode (< 7 days since onboarding).
+        **Required role:** Analyst or Admin.
+      operationId: executeRecommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Recommendation updated to executing status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recommendation'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden (insufficient role)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Recommendation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Conflict - tenant is in learning mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/autopilot/enable:
+    post:
+      summary: Enable autopilot
+      description: |
+        Enables autopilot for the tenant. Requires ≥7 days since onboarding.
+        The request body must contain `{"confirm": true}`.
+        **Required role:** Admin only.
+      operationId: enableAutopilot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnableAutopilotRequest'
+      responses:
+        "200":
+          description: Autopilot enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnableAutopilotResponse'
+        "400":
+          description: Bad request (confirm not true, or tenant not found)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden (Admin role required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "409":
+          description: Learning mode not complete (< 7 days since onboarding)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/reports:
+    post:
+      summary: Generate a compliance report
+      description: |
+        Initiates async generation of a SOC2 or ISO 27001 compliance report.
+        Returns 202 Accepted with the report ID.
+        **Required role:** Analyst or Admin.
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        "202":
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateReportResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/reports/{id}/download:
+    get:
+      summary: Download a compliance report
+      description: |
+        Returns the report metadata including S3 location when complete.
+        Returns 202 if report is still generating.
+        **Required role:** Auditor, Analyst, or Admin.
+      operationId: downloadReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Report complete with download info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        "202":
+          description: Report still generating
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "403":
+          description: Forbidden (Auditor role or higher required)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        "404":
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 

@@ -1,0 +1,32 @@
+service_name: api
+http:
+  listen_addr: ":8085"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+postgres:
+  dsn: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_raw_events: "raw-events"
+  topic_normalized_events: "normalized-events"
+  topic_risk_signals: "risk-signals"
+  topic_action_recommendations: "action-recommendations"
+  topic_action_requests: "action-requests"
+  consumer_group_id: "api"
+s3:
+  raw_bucket: "aitc-raw"
+  reports_bucket: "aitc-reports"
+  endpoint: "http://localhost:9000"
+  region: "us-east-1"
+  force_path_style: true
+okta:
+  base_url: ""
+  token: ""
