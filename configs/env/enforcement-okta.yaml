@@ -1,0 +1,26 @@
+service_name: enforcement-okta
+
+http:
+  listen_addr: ":8083"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+
+postgres:
+  dsn: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_action_requests: "action-requests"
+  consumer_group_id: "enforcement-okta"
+
+okta:
+  base_url: "https://example.okta.com"
+  token: ""  # set via OKTA_TOKEN env var
+
+policy:
+  allowlist_path: "contracts/json/policy/action_allowlist.v1.json"
+  disallowed_path: "contracts/json/policy/disallowed_actions.v1.json"
