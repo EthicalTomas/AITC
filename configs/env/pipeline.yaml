@@ -1,0 +1,24 @@
+service_name: pipeline
+
+http:
+  listen_addr: ":8082"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+
+postgres:
+  dsn: "postgres://aitc:aitcdev@localhost:5432/aitc?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_raw_events: "raw-events"
+  topic_risk_signals: "risk-signals"
+  consumer_group_id: "pipeline-svc"
