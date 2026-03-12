@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: "1.25.8"
           cache: true
 
       - name: Install golangci-lint
@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: "1.25.8"
 
       - name: Install goose
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
@@ -88,7 +88,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: "1.25.8"
           cache: true
 
       - name: Install protoc
@@ -109,6 +109,62 @@ jobs:
         run: |
           git diff --exit-code || (echo "ERROR: Generated proto code is out of date. Run 'make proto && make proto-export' and commit the results." && exit 1)
 
+  # ── Step 2.7: make proto / migrate / test / lint (Kafka-only pipeline) ──
+  integration-checks:
+    name: make proto / migrate / test / lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aitc
+          POSTGRES_PASSWORD: aitc
+          POSTGRES_DB: aitc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.8"
+          cache: true
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Install Go tools (protoc-gen-go, goose, golangci-lint)
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+          go install github.com/pressly/goose/v3/cmd/goose@latest
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b $(go env GOPATH)/bin latest
+
+      - name: make proto
+        run: make proto
+
+      - name: Verify generated protos are up-to-date
+        run: |
+          git diff --exit-code || (echo "ERROR: Generated proto code is out of date. Run 'make proto' and commit the results." && exit 1)
+
+      - name: make migrate
+        env:
+          POSTGRES_DSN: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+        run: make migrate
+
+      - name: make test
+        run: make test
+
+      - name: make lint
+        run: make lint
+
   # ── Step 2.7: Python checks (LLM reasoner) ──────────────────────────────
   python:
     name: Python — LLM reasoner lint
@@ -126,7 +182,6 @@ jobs:
       - name: ruff check
         run: |
           if [ -d services/llm_reasoner ]; then
-            ruff check services/llm_reasoner/ || true
+            ruff check services/llm_reasoner/
           fi
-
 
