@@ -116,7 +116,11 @@ func (w *S3Writer) putObject(ctx context.Context, key string, data []byte, hashH
 	if err != nil {
 		return fmt.Errorf("http put: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			_ = cerr // best-effort; response already consumed
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
