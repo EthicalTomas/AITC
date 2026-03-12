@@ -84,7 +84,7 @@ func (c *Client) ensureToken(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("m365 client: token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("m365 client: token error status %d", resp.StatusCode)
@@ -128,7 +128,7 @@ func (c *Client) ListContentBlobs(ctx context.Context, contentType string, start
 	if err != nil {
 		return nil, fmt.Errorf("m365 client: list blobs: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("m365 client: list blobs status %d", resp.StatusCode)
@@ -147,7 +147,7 @@ func (c *Client) FetchContent(ctx context.Context, contentURI string) ([]UALReco
 	// contentURI comes from external API responses and must not be trusted blindly.
 	parsed, parseErr := url.Parse(contentURI)
 	if parseErr != nil || parsed.Scheme != "https" || parsed.Host != "manage.office.com" {
-		return nil, fmt.Errorf("m365 client: contentURI must be https://manage.office.com/...")
+		return nil, fmt.Errorf("m365 client: contentURI must use https scheme and manage.office.com host")
 	}
 	if err := c.ensureToken(ctx); err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (c *Client) FetchContent(ctx context.Context, contentURI string) ([]UALReco
 	if err != nil {
 		return nil, fmt.Errorf("m365 client: fetch content: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("m365 client: fetch content status %d", resp.StatusCode)

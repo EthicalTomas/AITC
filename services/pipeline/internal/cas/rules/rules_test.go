@@ -223,3 +223,155 @@ func TestMailboxRule_CASScoreCapped(t *testing.T) {
 		t.Errorf("Confidence must not exceed 1.0, got %f", result.Confidence)
 	}
 }
+
+// ── Mass Download ─────────────────────────────────────────────────────────────
+
+func TestMassDownload_Triggered(t *testing.T) {
+result := rules.MassDownload(75, time.Hour)
+
+if !result.Triggered {
+t.Fatalf("expected mass download to trigger at 75 downloads, got: %+v", result)
+}
+if result.CASScore <= 0 {
+t.Errorf("expected CASScore > 0, got %f", result.CASScore)
+}
+if result.Count != 75 {
+t.Errorf("expected Count=75, got %d", result.Count)
+}
+}
+
+func TestMassDownload_NotTriggered_BelowThreshold(t *testing.T) {
+result := rules.MassDownload(10, time.Hour)
+
+if result.Triggered {
+t.Errorf("expected no trigger for 10 downloads, got: %+v", result)
+}
+}
+
+func TestMassDownload_AtThreshold_Triggered(t *testing.T) {
+result := rules.MassDownload(rules.MassDownloadThreshold, time.Hour)
+
+if !result.Triggered {
+t.Errorf("expected trigger exactly at threshold (%d), got: %+v", rules.MassDownloadThreshold, result)
+}
+}
+
+func TestMassDownload_CASScoreCapped(t *testing.T) {
+result := rules.MassDownload(10000, time.Hour)
+
+if result.CASScore > 1.0 {
+t.Errorf("CASScore must not exceed 1.0, got %f", result.CASScore)
+}
+if result.Confidence > 1.0 {
+t.Errorf("Confidence must not exceed 1.0, got %f", result.Confidence)
+}
+}
+
+// ── Rare Admin Action ─────────────────────────────────────────────────────────
+
+func TestRareAdminAction_HighRisk_Triggered(t *testing.T) {
+event := rules.AdminActionEvent{
+ActionType:        "admin_change.api_token.created",
+ActorIsPrivileged: true,
+CountInWindow:     1, // rare
+Window:            24 * time.Hour,
+IsAfterHours:      true,
+}
+
+result := rules.RareAdminAction(event)
+
+if !result.Triggered {
+t.Fatalf("expected rare admin action to trigger, got: %+v", result)
+}
+if result.CASScore <= 0 {
+t.Errorf("expected CASScore > 0, got %f", result.CASScore)
+}
+}
+
+func TestRareAdminAction_LowRisk_NoTrigger(t *testing.T) {
+event := rules.AdminActionEvent{
+ActionType:        "admin_change.user.updated",
+ActorIsPrivileged: false,
+CountInWindow:     10, // frequent
+Window:            24 * time.Hour,
+IsAfterHours:      false,
+}
+
+result := rules.RareAdminAction(event)
+
+if result.Triggered {
+t.Errorf("expected no trigger for low-risk frequent action, got: %+v", result)
+}
+}
+
+func TestRareAdminAction_CASScoreCapped(t *testing.T) {
+event := rules.AdminActionEvent{
+ActionType:        "admin_change.api_token.created",
+ActorIsPrivileged: true,
+CountInWindow:     0,
+Window:            24 * time.Hour,
+IsAfterHours:      true,
+}
+
+result := rules.RareAdminAction(event)
+
+if result.CASScore > 1.0 {
+t.Errorf("CASScore must not exceed 1.0, got %f", result.CASScore)
+}
+}
+
+// ── Risky OAuth Grant ─────────────────────────────────────────────────────────
+
+func TestRiskyOAuthGrant_SensitiveScopes_Triggered(t *testing.T) {
+event := rules.OAuthGrantEvent{
+AppName:           "malicious-app",
+Scopes:            []string{"mail.read", "files.readwrite.all"},
+IsFirstTimeApp:    true,
+GrantedByNonAdmin: true,
+}
+
+result := rules.RiskyOAuthGrant(event)
+
+if !result.Triggered {
+t.Fatalf("expected risky OAuth grant to trigger, got: %+v", result)
+}
+if result.CASScore <= 0 {
+t.Errorf("expected CASScore > 0, got %f", result.CASScore)
+}
+}
+
+func TestRiskyOAuthGrant_NoSensitiveScopes_NoTrigger(t *testing.T) {
+event := rules.OAuthGrantEvent{
+AppName:           "safe-app",
+Scopes:            []string{"openid", "profile", "email"},
+IsFirstTimeApp:    false,
+GrantedByNonAdmin: false,
+}
+
+result := rules.RiskyOAuthGrant(event)
+
+if result.Triggered {
+t.Errorf("expected no trigger for safe scopes, got: %+v", result)
+}
+}
+
+func TestRiskyOAuthGrant_CASScoreCapped(t *testing.T) {
+event := rules.OAuthGrantEvent{
+AppName: "mega-risky",
+Scopes: []string{
+"mail.read", "mail.readwrite", "files.readwrite.all",
+"directory.readwrite.all", "all",
+},
+IsFirstTimeApp:    true,
+GrantedByNonAdmin: true,
+}
+
+result := rules.RiskyOAuthGrant(event)
+
+if result.CASScore > 1.0 {
+t.Errorf("CASScore must not exceed 1.0, got %f", result.CASScore)
+}
+if result.Confidence > 1.0 {
+t.Errorf("Confidence must not exceed 1.0, got %f", result.Confidence)
+}
+}
