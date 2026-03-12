@@ -25,15 +25,15 @@ func isInLearningMode(onboardingStartedAt time.Time) bool {
 
 // recommendationRow represents a row from the response_actions table.
 type recommendationRow struct {
-	ID          string      `json:"id"`
-	TenantID    string      `json:"tenant_id"`
-	CaseID      string      `json:"case_id"`
-	ActionType  string      `json:"action_type"`
-	Mode        string      `json:"mode"`
-	Status      string      `json:"status"`
-	ExecutedBy  *string     `json:"executed_by,omitempty"`
-	CreatedAt   interface{} `json:"created_at"`
-	UpdatedAt   interface{} `json:"updated_at"`
+	ID         string      `json:"id"`
+	TenantID   string      `json:"tenant_id"`
+	CaseID     string      `json:"case_id"`
+	ActionType string      `json:"action_type"`
+	Mode       string      `json:"mode"`
+	Status     string      `json:"status"`
+	ExecutedBy *string     `json:"executed_by,omitempty"`
+	ProposedAt interface{} `json:"proposed_at"`
+	UpdatedAt  interface{} `json:"updated_at"`
 }
 
 // ListRecommendations handles GET /v1/recommendations.
@@ -96,9 +96,9 @@ func (h *Handler) ListRecommendations(w http.ResponseWriter, r *http.Request) {
 
 	limitArgs := append(args, pageSize, offset)
 	pgxRows, err := tx.Query(r.Context(),
-		"SELECT id, tenant_id, case_id, action_type, mode, status, executed_by, created_at, updated_at"+
+		"SELECT id, tenant_id, case_id, action_type, mode, status, executed_by, proposed_at, updated_at"+
 			" FROM response_actions WHERE "+where+
-			" ORDER BY created_at DESC LIMIT $"+itoa(argIdx)+" OFFSET $"+itoa(argIdx+1),
+			" ORDER BY proposed_at DESC LIMIT $"+itoa(argIdx)+" OFFSET $"+itoa(argIdx+1),
 		limitArgs...)
 	if err != nil {
 		h.logger.Error("list recommendations", zap.Error(err))
@@ -184,11 +184,11 @@ func (h *Handler) ExecuteRecommendation(w http.ResponseWriter, r *http.Request) 
 	// Fetch the recommendation.
 	var rec recommendationRow
 	err = tx.QueryRow(r.Context(),
-		`SELECT id, tenant_id, case_id, action_type, mode, status, executed_by, created_at, updated_at
+		`SELECT id, tenant_id, case_id, action_type, mode, status, executed_by, proposed_at, updated_at
 		 FROM response_actions WHERE id=$1 AND tenant_id=$2`,
 		id, tenantID).Scan(
 		&rec.ID, &rec.TenantID, &rec.CaseID, &rec.ActionType,
-		&rec.Mode, &rec.Status, &rec.ExecutedBy, &rec.CreatedAt, &rec.UpdatedAt)
+		&rec.Mode, &rec.Status, &rec.ExecutedBy, &rec.ProposedAt, &rec.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "recommendation not found"})
@@ -244,7 +244,7 @@ func collectRecommendations(rows pgx.Rows) ([]recommendationRow, error) {
 		var rec recommendationRow
 		if err := rows.Scan(
 			&rec.ID, &rec.TenantID, &rec.CaseID, &rec.ActionType,
-			&rec.Mode, &rec.Status, &rec.ExecutedBy, &rec.CreatedAt, &rec.UpdatedAt); err != nil {
+			&rec.Mode, &rec.Status, &rec.ExecutedBy, &rec.ProposedAt, &rec.UpdatedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, rec)

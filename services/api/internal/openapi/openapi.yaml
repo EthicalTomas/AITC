@@ -45,11 +45,11 @@ components:
           type: string
         status:
           type: string
-          enum: [open, investigating, resolved, closed]
+          enum: [open, in_progress, resolved, closed, false_positive]
         severity:
           type: string
           enum: [critical, high, medium, low]
-        summary:
+        title:
           type: string
         created_at:
           type: string
@@ -86,11 +86,11 @@ components:
           enum: [recommended, manual_executed, autopilot_executed]
         status:
           type: string
-          enum: [pending, executing, executed, failed]
+          enum: [proposed, validated, rejected, executing, executed, failed, rolled_back]
         executed_by:
           type: string
           nullable: true
-        created_at:
+        proposed_at:
           type: string
           format: date-time
         updated_at:
@@ -194,7 +194,8 @@ paths:
           in: query
           schema:
             type: string
-          description: Filter by case status (open, investigating, resolved, closed)
+            enum: [open, in_progress, resolved, closed, false_positive]
+          description: Filter by case status
         - name: page
           in: query
           schema:

@@ -80,10 +80,14 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reportID := uuid.New().String()
+	generatedBy := claims.Email
+	if generatedBy == "" {
+		generatedBy = claims.UserID
+	}
 	_, err = tx.Exec(r.Context(),
-		`INSERT INTO evidence_reports (id, tenant_id, report_type, status, period_start, period_end, requested_by, created_at)
-		 VALUES ($1, $2, $3, 'generating', $4, $5, $6, NOW())`,
-		reportID, tenantID, req.ReportType, req.PeriodStart, req.PeriodEnd, claims.Email)
+		`INSERT INTO evidence_reports (id, tenant_id, report_type, status, period_start, period_end, generated_by)
+		 VALUES ($1, $2, $3, 'generating', $4, $5, $6)`,
+		reportID, tenantID, req.ReportType, req.PeriodStart, req.PeriodEnd, generatedBy)
 	if err != nil {
 		h.logger.Error("insert report", zap.Error(err))
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})

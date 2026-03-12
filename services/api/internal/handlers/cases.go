@@ -79,7 +79,7 @@ func (h *Handler) ListCases(w http.ResponseWriter, r *http.Request) {
 	offsetIdx := len(args) + 2
 	listArgs := append(args, pageSize, offset)
 	pgxRows, err := tx.Query(r.Context(),
-		"SELECT id, tenant_id, status, severity, summary, created_at, updated_at FROM cases "+
+		"SELECT id, tenant_id, status, severity, title, created_at, updated_at FROM cases "+
 			where+" ORDER BY created_at DESC"+
 			" LIMIT $"+strconv.Itoa(limitIdx)+" OFFSET $"+strconv.Itoa(offsetIdx),
 		listArgs...)
@@ -138,9 +138,9 @@ func (h *Handler) GetCase(w http.ResponseWriter, r *http.Request) {
 
 	var c caseRow
 	err = tx.QueryRow(r.Context(),
-		`SELECT id, tenant_id, status, severity, summary, created_at, updated_at
+		`SELECT id, tenant_id, status, severity, title, created_at, updated_at
 		 FROM cases WHERE id=$1 AND tenant_id=$2`,
-		id, tenantID).Scan(&c.ID, &c.TenantID, &c.Status, &c.Severity, &c.Summary, &c.CreatedAt, &c.UpdatedAt)
+		id, tenantID).Scan(&c.ID, &c.TenantID, &c.Status, &c.Severity, &c.Title, &c.CreatedAt, &c.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "case not found"})
@@ -160,7 +160,7 @@ type caseRow struct {
 	TenantID  string      `json:"tenant_id"`
 	Status    string      `json:"status"`
 	Severity  string      `json:"severity"`
-	Summary   string      `json:"summary"`
+	Title     string      `json:"title"`
 	CreatedAt interface{} `json:"created_at"`
 	UpdatedAt interface{} `json:"updated_at"`
 }
@@ -170,7 +170,7 @@ func collectCases(rows pgx.Rows) ([]caseRow, error) {
 	var result []caseRow
 	for rows.Next() {
 		var c caseRow
-		if err := rows.Scan(&c.ID, &c.TenantID, &c.Status, &c.Severity, &c.Summary, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.TenantID, &c.Status, &c.Severity, &c.Title, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, c)
