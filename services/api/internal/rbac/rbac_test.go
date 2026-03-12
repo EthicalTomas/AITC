@@ -9,14 +9,6 @@ import (
 	"github.com/ethicaltomas/aitc/services/api/internal/rbac"
 )
 
-func handlerWithClaims(claims auth.Claims) http.Handler {
-	return auth.Middleware(auth.OktaConfig{DevMode: true})(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Override claims in context via WithClaims (dev stub puts Admin/dev-tenant)
-		}),
-	)
-}
-
 // injectClaims returns a middleware that sets fixed claims in context.
 func injectClaims(c auth.Claims) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
