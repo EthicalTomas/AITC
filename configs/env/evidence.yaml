@@ -1,0 +1,15 @@
+service_name: evidence
+http:
+  listen_addr: ":8086"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+postgres:
+  dsn: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+  max_conns: 5
+  min_conns: 1
+s3:
+  reports_bucket: "aitc-reports"
+  endpoint: "http://localhost:9000"
+  region: "us-east-1"
+  force_path_style: true
