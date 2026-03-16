@@ -1,0 +1,2 @@
+id,email,provider,mfa_enrolled,is_privileged,updated_at
+id-002,bob@example.com,okta,true,false,2026-01-10T08:00:00Z

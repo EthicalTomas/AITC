@@ -1,0 +1,2 @@
+id,event_type,actor,subject_type,subject_id,description,occurred_at
+log-301,aitc.action.executed,system,Case,case-201,revoke_sessions executed successfully,2026-01-01T08:00:00Z

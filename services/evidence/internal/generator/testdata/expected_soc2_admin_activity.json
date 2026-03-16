@@ -1,0 +1,22 @@
+{
+  "control_id": "CC7.2",
+  "control_name": "System Operations — Administrative Activity Log",
+  "report_type": "soc2",
+  "tenant_id": "tenant-test-fixture",
+  "period_start": "2026-01-01T00:00:00Z",
+  "period_end": "2026-01-31T23:59:59Z",
+  "records": [
+    {
+      "id": "evt-001",
+      "source": "okta",
+      "action": "admin_change.role.assigned",
+      "outcome": "success",
+      "actor_id": "actor-001",
+      "actor_email": "admin@example.com",
+      "target_id": "user-001",
+      "target_type": "User",
+      "occurred_at": "2026-01-01T08:00:00Z"
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

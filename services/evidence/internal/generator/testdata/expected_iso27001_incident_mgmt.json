@@ -1,0 +1,20 @@
+{
+  "control_id": "A.5.26",
+  "control_name": "ISO 27001:2022 — Response to Information Security Incidents",
+  "report_type": "iso27001",
+  "tenant_id": "tenant-test-fixture",
+  "period_start": "2026-01-01T00:00:00Z",
+  "period_end": "2026-01-31T23:59:59Z",
+  "records": [
+    {
+      "case_id": "case-201",
+      "title": "Credential stuffing attempt",
+      "status": "resolved",
+      "severity": "high",
+      "assigned_to": "security-team",
+      "created_at": "2026-01-01T08:00:00Z",
+      "closed_at": "2026-01-10T08:00:00Z"
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

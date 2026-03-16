@@ -1,0 +1,19 @@
+{
+  "control_id": "CC6.3",
+  "control_name": "Logical and Physical Access Controls — MFA Coverage",
+  "report_type": "soc2",
+  "tenant_id": "tenant-test-fixture",
+  "period_start": "2026-01-01T00:00:00Z",
+  "period_end": "2026-01-31T23:59:59Z",
+  "records": [
+    {
+      "id": "id-002",
+      "email": "bob@example.com",
+      "provider": "okta",
+      "mfa_enrolled": true,
+      "is_privileged": false,
+      "updated_at": "2026-01-10T08:00:00Z"
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

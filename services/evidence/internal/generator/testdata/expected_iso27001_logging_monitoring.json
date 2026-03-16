@@ -1,0 +1,20 @@
+{
+  "control_id": "A.8.15",
+  "control_name": "ISO 27001:2022 — Logging and Monitoring",
+  "report_type": "iso27001",
+  "tenant_id": "tenant-test-fixture",
+  "period_start": "2026-01-01T00:00:00Z",
+  "period_end": "2026-01-31T23:59:59Z",
+  "records": [
+    {
+      "id": "log-301",
+      "event_type": "aitc.action.executed",
+      "actor": "system",
+      "subject_type": "Case",
+      "subject_id": "case-201",
+      "description": "revoke_sessions executed successfully",
+      "occurred_at": "2026-01-01T08:00:00Z"
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

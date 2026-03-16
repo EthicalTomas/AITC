@@ -1,0 +1,2 @@
+id,email,display_name,provider,roles,mfa_enrolled,created_at,updated_at
+id-003,carol@example.com,Carol Jones,okta,super-admin,true,2026-01-01T08:00:00Z,2026-01-10T08:00:00Z
