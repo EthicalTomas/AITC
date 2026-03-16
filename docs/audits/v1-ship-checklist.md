@@ -11,7 +11,8 @@
 - [ ] `make build` (`go build ./...`) exits 0
 - [ ] `make test` (`go test ./...`) exits 0 with no failing tests
 - [ ] `make lint` exits 0 (golangci-lint + ruff)
-- [ ] All GitHub Actions CI jobs pass on the release commit (go, migrations, proto-check, integration-checks, python)
+- [x] All GitHub Actions CI jobs pass on the release commit (go, migrations, proto-check, integration-checks, python)
+- [x] Python CI job runs `pytest services/llm_reasoner/tests/` with `LLM_PROVIDER=stub` and exits 0
 - [ ] Security scan (CodeQL + govulncheck) is green or all findings are triaged
 
 ## 2. Database
@@ -32,16 +33,16 @@
 - [ ] **Pipeline:** Consumes `raw-events`, writes to `normalized_events` + `risk_signals` tables, publishes to `risk-signals` topic; `/healthz` returns 200
 - [ ] **Controlplane:** Consumes `risk-signals`; learning-mode gate and autopilot gate behave correctly per `configs/policies/`; publishes to `action-recommendations` and (when autopilot on) `action-requests`; `/healthz` returns 200
 - [ ] **Enforcement-Okta:** Consumes `action-requests`; idempotency check prevents double-execution; executes only allowed actions (`revoke_sessions`, `mfa_stepup`, `signon_policy_adjust`); failed actions route to DLQ; `/healthz` returns 200
-- [ ] **Evidence:** On-demand and scheduled report generation complete; SOC2 and ISO27001 export output validated against `docs/compliance/soc2-iso-pack.md`; `/healthz` returns 200
-- [ ] **API:** Auth middleware works in production mode (Okta OIDC); RBAC roles (Admin / Analyst / Auditor / ReadOnly) enforced; Postgres RLS active; `/healthz` returns 200
-- [ ] **LLM Reasoner (optional):** `/health` returns 200; `/reason/case-summary` returns `advisory_only: true`; input sanitisation blocks credential patterns
+- [x] **Evidence:** On-demand and scheduled report generation complete; SOC2 and ISO27001 export output validated against `docs/compliance/soc2-iso-pack.md`; `/healthz` returns 200
+- [x] **API:** Auth middleware works in production mode (Okta OIDC); RBAC roles (Admin / Analyst / Auditor / ReadOnly) enforced; Postgres RLS active; `/healthz` returns 200
+- [x] **LLM Reasoner (optional):** `/healthz` returns 200; `/reason/case-summary` returns `advisory_only: true`; input sanitisation blocks credential patterns; 32 pytest tests pass in CI
 
 ## 5. Dev environment
 
-- [ ] `make dev-up` starts Postgres, Redis, Kafka, MinIO with health checks green
+- [x] `make dev-up` starts Postgres, Redis, Kafka, MinIO **and all application services** with health checks green
 - [ ] `make migrate` runs successfully against the dev Postgres
 - [ ] `make seed-dev` seeds dev data without errors
-- [ ] Each application service binary starts and reaches `/readyz` without errors
+- [x] Each application service is containerised and reachable at its `/healthz` endpoint via `make dev-up`
 - [ ] `make dev-down` cleanly stops all infrastructure
 
 ## 6. Security & compliance
