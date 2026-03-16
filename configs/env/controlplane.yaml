@@ -1,0 +1,24 @@
+service_name: controlplane
+
+http:
+  listen_addr: ":8084"
+  read_timeout_s: 30
+  write_timeout_s: 30
+  idle_timeout_s: 60
+
+postgres:
+  dsn: "postgres://aitc:aitc@localhost:5432/aitc?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic_risk_signals: "risk-signals"
+  topic_action_recommendations: "action-recommendations"
+  topic_action_requests: "action-requests"
+  consumer_group_id: "controlplane"
+
+policy:
+  allowlist_path: "contracts/json/policy/action_allowlist.v1.json"
+  disallowed_path: "contracts/json/policy/disallowed_actions.v1.json"
