@@ -15,7 +15,6 @@ package generator_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"os"
 	"path/filepath"
@@ -427,11 +426,15 @@ func TestSOC2BundleControlIDs(t *testing.T) {
 		arts[i] = &export.Artifact{ControlID: id, ReportType: "soc2"}
 	}
 
-	data, err := json.Marshal(arts)
-	if err != nil {
-		t.Fatalf("marshal artifacts: %v", err)
+	var buf bytes.Buffer
+	for _, a := range arts {
+		data, err := export.MarshalJSON(a)
+		if err != nil {
+			t.Fatalf("marshal artifact: %v", err)
+		}
+		buf.Write(data)
 	}
-	s := string(data)
+	s := buf.String()
 
 	for _, id := range requiredControlIDs {
 		if !strings.Contains(s, id) {
@@ -452,11 +455,15 @@ func TestISO27001BundleControlIDs(t *testing.T) {
 		arts[i] = &export.Artifact{ControlID: id, ReportType: "iso27001"}
 	}
 
-	data, err := json.Marshal(arts)
-	if err != nil {
-		t.Fatalf("marshal artifacts: %v", err)
+	var buf bytes.Buffer
+	for _, a := range arts {
+		data, err := export.MarshalJSON(a)
+		if err != nil {
+			t.Fatalf("marshal artifact: %v", err)
+		}
+		buf.Write(data)
 	}
-	s := string(data)
+	s := buf.String()
 
 	for _, id := range requiredControlIDs {
 		if !strings.Contains(s, id) {
