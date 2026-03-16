@@ -167,7 +167,7 @@ jobs:
 
   # ── Step 2.7: Python checks (LLM reasoner) ──────────────────────────────
   python:
-    name: Python — LLM reasoner lint
+    name: Python — LLM reasoner lint + test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -176,12 +176,23 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install linters
-        run: pip install ruff
+      - name: Install dependencies
+        run: |
+          if [ -f services/llm_reasoner/requirements.txt ]; then
+            pip install -r services/llm_reasoner/requirements.txt
+          else
+            pip install ruff pytest pytest-asyncio fastapi httpx uvicorn pydantic
+          fi
 
       - name: ruff check
         run: |
           if [ -d services/llm_reasoner ]; then
             ruff check services/llm_reasoner/
+          fi
+
+      - name: pytest
+        run: |
+          if [ -d services/llm_reasoner/tests ]; then
+            cd services/llm_reasoner && LLM_PROVIDER=stub python -m pytest tests/ --tb=short -q
           fi
 

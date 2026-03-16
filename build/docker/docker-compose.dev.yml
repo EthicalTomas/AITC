@@ -105,8 +105,241 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Application services ──────────────────────────────────────────────────
+  # Each service is built from the repo root using Dockerfile.goservice with the
+  # SERVICE build arg selecting the cmd/ subdirectory.
+  # Config files are bind-mounted read-only from configs/env/.
+  # Hosts inside the compose network use service names (postgres, redis, kafka)
+  # instead of localhost; the env vars below override the defaults in YAML.
+
+  # ── Ingestion (port 8080) ─────────────────────────────────────────────────
+  ingestion:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: ingestion
+    container_name: aitc-ingestion
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+      - ../../contracts:/app/contracts:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      KAFKA_BROKERS: "kafka:29092"
+      REDIS_ADDR: "redis:6379"
+      S3_ENDPOINT: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: aitcdev
+      AWS_SECRET_ACCESS_KEY: aitcdevpass
+    command: ["/app/service", "-config", "configs/env/ingestion.yaml"]
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Pipeline (port 8081) ──────────────────────────────────────────────────
+  pipeline:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: pipeline
+    container_name: aitc-pipeline
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      KAFKA_BROKERS: "kafka:29092"
+      REDIS_ADDR: "redis:6379"
+    command: ["/app/service", "-config", "configs/env/pipeline.yaml"]
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Controlplane (port 8084) ──────────────────────────────────────────────
+  controlplane:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: controlplane
+    container_name: aitc-controlplane
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+      - ../../contracts:/app/contracts:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      KAFKA_BROKERS: "kafka:29092"
+    command: ["/app/service", "-config", "configs/env/controlplane.yaml"]
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Enforcement-Okta (port 8083) ──────────────────────────────────────────
+  enforcement-okta:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: enforcement-okta
+    container_name: aitc-enforcement-okta
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+      - ../../contracts:/app/contracts:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      KAFKA_BROKERS: "kafka:29092"
+      OKTA_TOKEN: ""   # set via OKTA_TOKEN env var in shell; never commit a real token
+    command: ["/app/service", "-config", "configs/env/enforcement-okta.yaml"]
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── API (port 8085) ───────────────────────────────────────────────────────
+  api:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: api
+    container_name: aitc-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      KAFKA_BROKERS: "kafka:29092"
+      REDIS_ADDR: "redis:6379"
+      S3_ENDPOINT: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: aitcdev
+      AWS_SECRET_ACCESS_KEY: aitcdevpass
+      DEV_AUTH_STUB: "true"   # disables Okta OIDC; set okta.base_url in prod config
+    command: ["/app/service", "-config", "configs/env/api.yaml"]
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Evidence (port 8086) ──────────────────────────────────────────────────
+  evidence:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.goservice
+      args:
+        SERVICE: evidence
+    container_name: aitc-evidence
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../../configs:/app/configs:ro
+    working_dir: /app
+    environment:
+      POSTGRES_DSN: "postgres://aitc:aitc@postgres:5432/aitc?sslmode=disable"
+      S3_ENDPOINT: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: aitcdev
+      AWS_SECRET_ACCESS_KEY: aitcdevpass
+    command: ["/app/service", "-config", "configs/env/evidence.yaml"]
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── LLM Reasoner (port 8087, optional) ───────────────────────────────────
+  # Advisory-only. No Okta/M365 credentials accepted.
+  # Set OPENAI_API_KEY in the shell environment to enable the real LLM provider;
+  # without it the service starts in stub mode (safe for local demos).
+  llm-reasoner:
+    build:
+      context: ../..
+      dockerfile: build/docker/Dockerfile.python
+    container_name: aitc-llm-reasoner
+    restart: unless-stopped
+    environment:
+      LLM_PROVIDER: "${LLM_PROVIDER:-stub}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-4o-mini}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"   # empty = stub mode; never commit a real key
+    ports:
+      - "8087:8087"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
 volumes:
   postgres_data:
   minio_data:
-
 

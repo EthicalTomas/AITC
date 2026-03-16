@@ -1,7 +1,6 @@
 //go:build ignore
 
-FROM golang:1.22-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go build ./...
+// This file documents the multi-stage Dockerfile used for Go services.
+// The actual Dockerfile is build/docker/Dockerfile.goservice.
+// It is kept here for reference and documentation only.
 
