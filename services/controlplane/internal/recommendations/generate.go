@@ -121,6 +121,7 @@ func (g *Generator) Generate(ctx context.Context, signal *riskpb.RiskSignalV1) e
 			zap.String("tenant_id", tenantID),
 			zap.String("action_type", actionType),
 			zap.String("exec_mode", execMode),
+			zap.String("decision_id", decision.DecisionID),
 			zap.Bool("allowed", decision.Allowed),
 			zap.Strings("reasons", decision.RejectionReasons),
 		)
