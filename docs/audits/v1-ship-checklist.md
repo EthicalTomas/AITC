@@ -33,7 +33,7 @@
 - [ ] **Pipeline:** Consumes `raw-events`, writes to `normalized_events` + `risk_signals` tables, publishes to `risk-signals` topic; `/healthz` returns 200
 - [ ] **Controlplane:** Consumes `risk-signals`; learning-mode gate and autopilot gate behave correctly per `configs/policies/`; publishes to `action-recommendations` and (when autopilot on) `action-requests`; `/healthz` returns 200
 - [ ] **Enforcement-Okta:** Consumes `action-requests`; idempotency check prevents double-execution; executes only allowed actions (`revoke_sessions`, `mfa_stepup`, `signon_policy_adjust`); failed actions route to DLQ; `/healthz` returns 200
-- [x] **Evidence:** On-demand and scheduled report generation complete; SOC2 and ISO27001 export output validated against `docs/compliance/soc2-iso-pack.md`; `/healthz` returns 200
+- [x] **Evidence:** On-demand and scheduled report generation complete; SOC2 (CC6.1/CC6.2/CC6.3/CC7.2/CC7.4) and ISO 27001:2022 (A.5.15/A.5.26/A.8.15) packs validated against `docs/compliance/soc2-iso-pack.md` by schema assertion tests + golden-file tests in `services/evidence/internal/generator/completeness_test.go`; `/healthz` returns 200
 - [x] **API:** Auth middleware works in production mode (Okta OIDC); RBAC roles (Admin / Analyst / Auditor / ReadOnly) enforced; Postgres RLS active; `/healthz` returns 200
 - [x] **LLM Reasoner (optional):** `/healthz` returns 200; `/reason/case-summary` returns `advisory_only: true`; input sanitisation blocks credential patterns; 32 pytest tests pass in CI
 

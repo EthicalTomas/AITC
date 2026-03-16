@@ -1,0 +1,2 @@
+id,provider_id,provider,email,display_name,roles,is_privileged,mfa_enrolled,created_at,updated_at
+id-001,okta-001,okta,alice@example.com,Alice Smith,"admin,analyst",true,true,2026-01-01T08:00:00Z,2026-01-10T08:00:00Z

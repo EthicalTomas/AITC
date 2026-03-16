@@ -1,0 +1,31 @@
+{
+  "control_id": "CC7.4",
+  "control_name": "System Operations — Incident Timelines",
+  "report_type": "soc2",
+  "tenant_id": "tenant-test-fixture",
+  "period_start": "2026-01-01T00:00:00Z",
+  "period_end": "2026-01-31T23:59:59Z",
+  "records": [
+    {
+      "case_id": "case-001",
+      "case_title": "Impossible travel detected",
+      "case_status": "resolved",
+      "severity": "high",
+      "event_type": "case_opened",
+      "description": "Case created: Impossible travel detected",
+      "actor": "pipeline",
+      "occurred_at": "2026-01-01T08:00:00Z"
+    },
+    {
+      "case_id": "case-001",
+      "case_title": "Impossible travel detected",
+      "case_status": "resolved",
+      "severity": "high",
+      "event_type": "response_action",
+      "description": "revoke_sessions — executed",
+      "actor": "system",
+      "occurred_at": "2026-01-10T08:00:00Z"
+    }
+  ],
+  "generated_at": "2026-01-15T12:00:00Z"
+}

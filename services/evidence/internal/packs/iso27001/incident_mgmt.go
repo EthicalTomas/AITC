@@ -22,8 +22,8 @@ type IncidentMgmtRow struct {
 	ClosedAt   string `json:"closed_at"   csv:"closed_at"`
 }
 
-// GenerateIncidentManagement produces an ISO 27001 A.16.1 incident-management artifact.
-// A.16.1 — Management of information security incidents and improvements.
+// GenerateIncidentManagement produces an ISO 27001:2022 A.5.26 incident-management artifact.
+// A.5.26 — Response to information security incidents: case records, timelines, action audit trail.
 // Lists all cases opened during the period with their status and resolution.
 func GenerateIncidentManagement(ctx context.Context, db *pgxpool.Pool, tenantID string, periodStart, periodEnd time.Time) (*export.Artifact, error) {
 	tx, err := db.Begin(ctx)
@@ -67,8 +67,8 @@ func GenerateIncidentManagement(ctx context.Context, db *pgxpool.Pool, tenantID 
 	}
 
 	return &export.Artifact{
-		ControlID:   "A.16.1",
-		ControlName: "ISO 27001 — Management of Information Security Incidents",
+		ControlID:   "A.5.26",
+		ControlName: "ISO 27001:2022 — Response to Information Security Incidents",
 		ReportType:  "iso27001",
 		TenantID:    tenantID,
 		PeriodStart: periodStart.UTC().Format(time.RFC3339),

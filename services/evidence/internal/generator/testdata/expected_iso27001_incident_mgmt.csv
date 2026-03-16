@@ -1,0 +1,2 @@
+case_id,title,status,severity,assigned_to,created_at,closed_at
+case-201,Credential stuffing attempt,resolved,high,security-team,2026-01-01T08:00:00Z,2026-01-10T08:00:00Z

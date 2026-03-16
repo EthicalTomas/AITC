@@ -1,0 +1,2 @@
+id,source,action,outcome,actor_id,actor_email,target_id,target_type,occurred_at
+evt-001,okta,admin_change.role.assigned,success,actor-001,admin@example.com,user-001,User,2026-01-01T08:00:00Z

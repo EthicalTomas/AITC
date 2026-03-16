@@ -24,8 +24,8 @@ type ISOIdentityRow struct {
 	CreatedAt    string `json:"created_at"    csv:"created_at"`
 }
 
-// GenerateAccessControl produces an ISO 27001 Annex A.9.2 access-control artifact.
-// A.9.2 — User access management: provisioning, de-provisioning, review of user rights.
+// GenerateAccessControl produces an ISO 27001:2022 A.5.15 access-control artifact.
+// A.5.15 — Access control: identity inventory, role/group membership, OAuth grant log.
 // The artifact lists all identities with their roles, MFA status, and privileged flag.
 func GenerateAccessControl(ctx context.Context, db *pgxpool.Pool, tenantID string, periodStart, periodEnd time.Time) (*export.Artifact, error) {
 	tx, err := db.Begin(ctx)
@@ -67,8 +67,8 @@ func GenerateAccessControl(ctx context.Context, db *pgxpool.Pool, tenantID strin
 	}
 
 	return &export.Artifact{
-		ControlID:   "A.9.2",
-		ControlName: "ISO 27001 — User Access Management",
+		ControlID:   "A.5.15",
+		ControlName: "ISO 27001:2022 — Access Control (Identity Inventory)",
 		ReportType:  "iso27001",
 		TenantID:    tenantID,
 		PeriodStart: periodStart.UTC().Format(time.RFC3339),

@@ -22,8 +22,8 @@ type AuditLogRow struct {
 	OccurredAt  string `json:"occurred_at"  csv:"occurred_at"`
 }
 
-// GenerateLoggingMonitoring produces an ISO 27001 A.12.4 logging and monitoring artifact.
-// A.12.4 — Logging and monitoring: event logging, protection of log information, clock sync.
+// GenerateLoggingMonitoring produces an ISO 27001:2022 A.8.15 logging and monitoring artifact.
+// A.8.15 — Logging: event logging, protection of log information, clock synchronization.
 // Provides the audit trail of security-relevant events during the evidence period.
 func GenerateLoggingMonitoring(ctx context.Context, db *pgxpool.Pool, tenantID string, periodStart, periodEnd time.Time) (*export.Artifact, error) {
 	tx, err := db.Begin(ctx)
@@ -67,8 +67,8 @@ func GenerateLoggingMonitoring(ctx context.Context, db *pgxpool.Pool, tenantID s
 	}
 
 	return &export.Artifact{
-		ControlID:   "A.12.4",
-		ControlName: "ISO 27001 — Logging and Monitoring",
+		ControlID:   "A.8.15",
+		ControlName: "ISO 27001:2022 — Logging and Monitoring",
 		ReportType:  "iso27001",
 		TenantID:    tenantID,
 		PeriodStart: periodStart.UTC().Format(time.RFC3339),

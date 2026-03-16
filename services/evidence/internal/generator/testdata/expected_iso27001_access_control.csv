@@ -1,0 +1,2 @@
+id,email,display_name,provider,roles,is_privileged,mfa_enrolled,created_at
+id-101,dave@example.com,Dave Kim,m365,GlobalAdmin,true,true,2026-01-01T08:00:00Z
